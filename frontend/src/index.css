@@ -1,0 +1,266 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Cinzel+Decorative:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Styles */
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply text-white font-sans antialiased overflow-x-hidden;
+    background: #0a0a0a;
+    min-height: 100vh;
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-dark-400;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neon/30 rounded-full;
+    background: linear-gradient(180deg, #39ff14, #00ff88);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neon/50;
+  }
+
+  ::selection {
+    @apply bg-neon text-dark;
+  }
+}
+
+/* Component Classes */
+@layer components {
+  /* Spotify-inspired gradient backgrounds */
+  .bg-spotify-gradient {
+    background: linear-gradient(180deg, 
+      rgba(57, 255, 20, 0.3) 0%, 
+      rgba(10, 10, 10, 1) 30%,
+      rgba(10, 10, 10, 1) 100%
+    );
+  }
+
+  .bg-spotify-gradient-reverse {
+    background: linear-gradient(0deg, 
+      rgba(57, 255, 20, 0.2) 0%, 
+      rgba(10, 10, 10, 1) 40%,
+      rgba(10, 10, 10, 1) 100%
+    );
+  }
+
+  .bg-hero-gradient {
+    background: 
+      radial-gradient(ellipse at top, rgba(57, 255, 20, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(0, 255, 136, 0.1) 0%, transparent 40%),
+      linear-gradient(180deg, #0a0a0a 0%, #0d1a0d 50%, #0a0a0a 100%);
+  }
+
+  .bg-card-gradient {
+    background: linear-gradient(135deg, 
+      rgba(57, 255, 20, 0.05) 0%, 
+      rgba(10, 10, 10, 0.8) 50%,
+      rgba(57, 255, 20, 0.02) 100%
+    );
+  }
+
+  /* Neon Button */
+  .btn-neon {
+    @apply relative px-6 py-3 font-semibold text-neon border-2 border-neon rounded-xl 
+           overflow-hidden transition-all duration-300 
+           hover:text-dark hover:shadow-neon;
+    background: transparent;
+  }
+
+  .btn-neon::before {
+    content: '';
+    @apply absolute inset-0 transition-transform duration-300;
+    background: linear-gradient(135deg, #39ff14, #00ff88);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .btn-neon:hover::before {
+    transform: scaleX(1);
+  }
+
+  .btn-neon span {
+    @apply relative z-10;
+  }
+
+  /* Neon Button Solid */
+  .btn-neon-solid {
+    @apply px-6 py-3 font-semibold text-dark rounded-xl 
+           transition-all duration-300 hover:scale-105
+           active:scale-95;
+    background: linear-gradient(135deg, #39ff14, #00ff88);
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+  }
+
+  .btn-neon-solid:hover {
+    box-shadow: 0 0 40px rgba(57, 255, 20, 0.5);
+  }
+
+  /* Glass Card */
+  .glass-card {
+    @apply backdrop-blur-xl rounded-2xl transition-all duration-300;
+    background: linear-gradient(135deg, 
+      rgba(30, 30, 30, 0.8) 0%, 
+      rgba(20, 20, 20, 0.9) 100%
+    );
+    border: 1px solid rgba(57, 255, 20, 0.1);
+  }
+
+  .glass-card:hover {
+    border-color: rgba(57, 255, 20, 0.3);
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.1);
+  }
+
+  /* Feature Card with gradient border */
+  .feature-card {
+    @apply relative p-[1px] rounded-2xl overflow-hidden;
+    background: linear-gradient(135deg, rgba(57, 255, 20, 0.3), transparent, rgba(57, 255, 20, 0.1));
+  }
+
+  .feature-card-inner {
+    @apply bg-dark-400 rounded-2xl p-8 h-full;
+    background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  }
+
+  /* Input Styles */
+  .input-neon {
+    @apply w-full px-4 py-3 rounded-xl
+           text-white placeholder-gray-500 outline-none
+           transition-all duration-300;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(57, 255, 20, 0.2);
+  }
+
+  .input-neon:focus {
+    border-color: #39ff14;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+  }
+
+  /* Clean gradient text - no bars */
+  .text-gradient {
+    background: linear-gradient(135deg, #39ff14 0%, #00ff88 50%, #39ff14 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% auto;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+  }
+
+  /* Neon text glow */
+  .text-neon-glow {
+    color: #39ff14;
+    text-shadow: 
+      0 0 10px rgba(57, 255, 20, 0.8),
+      0 0 20px rgba(57, 255, 20, 0.6),
+      0 0 30px rgba(57, 255, 20, 0.4);
+  }
+
+  /* Glow effect on hover */
+  .glow-hover {
+    @apply transition-all duration-300;
+  }
+
+  .glow-hover:hover {
+    filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.5));
+  }
+
+  /* Animated border */
+  .animated-border {
+    @apply relative;
+  }
+
+  .animated-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-2xl;
+    padding: 2px;
+    background: linear-gradient(90deg, #39ff14, #00ff88, #39ff14);
+    background-size: 200% auto;
+    animation: gradient-shift 3s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  /* Status Badges */
+  .badge-success {
+    @apply px-3 py-1 text-xs font-semibold rounded-full;
+    background: rgba(57, 255, 20, 0.2);
+    color: #39ff14;
+  }
+
+  .badge-pending {
+    @apply px-3 py-1 text-xs font-semibold bg-yellow-500/20 text-yellow-400 rounded-full;
+  }
+
+  .badge-failed {
+    @apply px-3 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full;
+  }
+
+  /* Skeleton Loading */
+  .skeleton {
+    @apply rounded;
+    background: linear-gradient(90deg, 
+      rgba(30, 30, 30, 1) 0%, 
+      rgba(50, 50, 50, 1) 50%, 
+      rgba(30, 30, 30, 1) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Particle canvas layer */
+  .particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  .text-shadow-neon {
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.3);
+  }
+
+  .border-gradient {
+    border-image: linear-gradient(135deg, #39ff14, #00ff88) 1;
+  }
+
+  /* Ensure content is above particles */
+  .z-content {
+    @apply relative z-10;
+  }
+}
