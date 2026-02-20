@@ -20,12 +20,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
+
     if (token && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-        // Fetch wallets if user exists
         fetchWallets();
       } catch (e) {
         console.error('Error parsing stored user:', e);
@@ -51,9 +50,9 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Attempting login for:', email);
       const response = await api.post('/auth/login', { email, password });
-      
+
       console.log('Login response:', response.data);
-      
+
       const data = response.data.data || response.data;
       const token = data.token;
       const userData = {
@@ -63,15 +62,18 @@ export const AuthProvider = ({ children }) => {
         lastName: data.fullName?.split(' ')[1] || data.lastName,
         fullName: data.fullName,
         role: data.role,
+        profilePhoto: data.profilePhoto || null,
       };
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
+
+      // Save login time for session management
+      localStorage.setItem('loginTime', Date.now().toString());
+
       setUser(userData);
-      
-      // Fetch wallets after login
       await fetchWallets();
-      
+
       return userData;
     } catch (error) {
       console.error('Login error:', error);
@@ -80,11 +82,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
+  // Register function - NO AUTO LOGIN
   const register = async (formData) => {
     try {
       console.log('Attempting registration for:', formData.email);
-      
+
       const registerData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -92,33 +94,35 @@ export const AuthProvider = ({ children }) => {
         phone: formData.phone,
         password: formData.password,
       };
-      
+
       const response = await api.post('/auth/register', registerData);
-      
       console.log('Registration response:', response.data);
-      
-      const data = response.data.data || response.data;
-      const token = data.token;
-      const userData = {
-        id: data.id || data.userId,
-        email: data.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        fullName: data.fullName || `${formData.firstName} ${formData.lastName}`,
-        role: data.role,
-      };
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      
-      // Fetch wallets after registration
-      await fetchWallets();
-      
-      return userData;
+      return response.data;
     } catch (error) {
       console.error('Registration error:', error);
       const message = error.response?.data?.message || error.response?.data?.error || 'Registration failed. Please try again.';
+      throw new Error(message);
+    }
+  };
+
+  // Forgot Password
+  const forgotPassword = async (email) => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to send reset email';
+      throw new Error(message);
+    }
+  };
+
+  // Reset Password
+  const resetPassword = async (token, newPassword) => {
+    try {
+      const response = await api.post('/auth/reset-password', { token, newPassword });
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to reset password';
       throw new Error(message);
     }
   };
@@ -127,6 +131,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('loginTime');
+    // Keep rememberedEmail and rememberMe if set
     setUser(null);
     setWallets([]);
   };
@@ -144,6 +150,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Upload profile photo
+  const uploadProfilePhoto = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const response = await api.post('/users/profile/photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const updatedUser = { ...user, profilePhoto: response.data.data };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to upload photo');
+    }
+  };
+
   const value = {
     user,
     wallets,
@@ -152,7 +179,10 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    uploadProfilePhoto,
     fetchWallets,
+    forgotPassword,
+    resetPassword,
   };
 
   return (

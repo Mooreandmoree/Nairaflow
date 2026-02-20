@@ -50,8 +50,9 @@ const RegisterPage = () => {
 
     try {
       await register(formData);
-      toast.success('Account created successfully!');
-      navigate('/dashboard');
+      toast.success('Account created successfully! Please sign in.');
+      // Redirect to login page instead of dashboard
+      navigate('/login');
     } catch (error) {
       toast.error(error.message || 'Registration failed');
     } finally {
