@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8081/api',  // Changed from 8080 to 8081
+  baseURL: 'http://localhost:8081/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,13 +29,28 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Error:', error.response?.status, error.message);
-    
+
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Don't redirect if we're on OAuth callback or login page
+      const currentPath = window.location.pathname;
+      const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+      const isAuthCallback = currentPath.includes('/auth/');
+      const isPublicPath = publicPaths.some(path => currentPath.startsWith(path));
+
+      if (!isAuthCallback && !isPublicPath) {
+        // Only clear auth and redirect if on a protected page
+        const authProvider = localStorage.getItem('authProvider');
+        if (authProvider !== 'google') {
+          // Don't auto-redirect Google OAuth users
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('loginTime');
+          localStorage.removeItem('authProvider');
+          window.location.href = '/login';
+        }
+      }
     }
-    
+
     return Promise.reject(error);
   }
 );

@@ -18,22 +18,64 @@ export const AuthProvider = ({ children }) => {
 
   // Check for stored token on mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
-    if (token && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        fetchWallets();
-      } catch (e) {
-        console.error('Error parsing stored user:', e);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      if (token && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+
+          // Try to validate token with backend
+          const authProvider = localStorage.getItem('authProvider');
+          if (authProvider !== 'google') {
+            // Only validate JWT tokens from our backend
+            try {
+              await api.get('/auth/validate');
+              // Token is valid, fetch wallets
+              await fetchWallets();
+            } catch (error) {
+              if (error.response?.status === 401) {
+                // Token expired, clear auth
+                console.log('Token expired, clearing auth');
+                clearAuth();
+              }
+            }
+          } else {
+            // Google OAuth user - validate Google token
+            try {
+              const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (!response.ok) {
+                console.log('Google token expired');
+                clearAuth();
+              }
+            } catch (error) {
+              console.log('Google token validation failed');
+              // Keep user logged in even if validation fails (offline mode)
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing stored user:', e);
+          clearAuth();
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
+
+  const clearAuth = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('loginTime');
+    localStorage.removeItem('authProvider');
+    setUser(null);
+    setWallets([]);
+  };
 
   // Fetch user wallets
   const fetchWallets = async () => {
@@ -67,9 +109,8 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-
-      // Save login time for session management
       localStorage.setItem('loginTime', Date.now().toString());
+      localStorage.setItem('authProvider', 'local');
 
       setUser(userData);
       await fetchWallets();
@@ -132,7 +173,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('loginTime');
-    // Keep rememberedEmail and rememberMe if set
+    localStorage.removeItem('authProvider');
+    // Keep rememberedEmail and rememberMe
     setUser(null);
     setWallets([]);
   };
