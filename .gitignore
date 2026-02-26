@@ -1,0 +1,17 @@
+# Environment variables - NEVER commit these
+.env
+*.env
+backend/.env
+
+# Uploads
+backend/uploads/
+
+# IDE
+.idea/
+*.iml
+.vscode/settings.json
+
+# Build
+backend/target/
+frontend/node_modules/
+frontend/dist/
