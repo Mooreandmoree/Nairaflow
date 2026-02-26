@@ -1,4 +1,4 @@
-# Environment variables - NEVER commit these
+# Environment variables - NEVER commit
 .env
 *.env
 backend/.env
@@ -9,7 +9,6 @@ backend/uploads/
 # IDE
 .idea/
 *.iml
-.vscode/settings.json
 
 # Build
 backend/target/
