@@ -16,9 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [wallets, setWallets] = useState([]);
 
-  // Check for stored token on mount
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = () => {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
 
@@ -27,36 +26,10 @@ export const AuthProvider = ({ children }) => {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
 
-          // Try to validate token with backend
-          const authProvider = localStorage.getItem('authProvider');
-          if (authProvider !== 'google') {
-            // Only validate JWT tokens from our backend
-            try {
-              await api.get('/auth/validate');
-              // Token is valid, fetch wallets
-              await fetchWallets();
-            } catch (error) {
-              if (error.response?.status === 401) {
-                // Token expired, clear auth
-                console.log('Token expired, clearing auth');
-                clearAuth();
-              }
-            }
-          } else {
-            // Google OAuth user - validate Google token
-            try {
-              const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (!response.ok) {
-                console.log('Google token expired');
-                clearAuth();
-              }
-            } catch (error) {
-              console.log('Google token validation failed');
-              // Keep user logged in even if validation fails (offline mode)
-            }
-          }
+          // Fetch wallets in background
+          fetchWallets().catch(err => {
+            console.log('Wallet fetch failed (non-critical):', err.message);
+          });
         } catch (e) {
           console.error('Error parsing stored user:', e);
           clearAuth();
@@ -77,23 +50,21 @@ export const AuthProvider = ({ children }) => {
     setWallets([]);
   };
 
-  // Fetch user wallets
   const fetchWallets = async () => {
     try {
       const response = await api.get('/wallets');
-      setWallets(response.data.data || response.data || []);
+      const walletData = response.data.data || response.data || [];
+      setWallets(Array.isArray(walletData) ? walletData : []);
+      return walletData;
     } catch (error) {
       console.error('Error fetching wallets:', error);
+      return [];
     }
   };
 
-  // Login function
   const login = async (email, password) => {
     try {
-      console.log('Attempting login for:', email);
       const response = await api.post('/auth/login', { email, password });
-
-      console.log('Login response:', response.data);
 
       const data = response.data.data || response.data;
       const token = data.token;
@@ -117,17 +88,13 @@ export const AuthProvider = ({ children }) => {
 
       return userData;
     } catch (error) {
-      console.error('Login error:', error);
       const message = error.response?.data?.message || error.response?.data?.error || 'Login failed. Please check your credentials.';
       throw new Error(message);
     }
   };
 
-  // Register function - NO AUTO LOGIN
   const register = async (formData) => {
     try {
-      console.log('Attempting registration for:', formData.email);
-
       const registerData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -137,16 +104,13 @@ export const AuthProvider = ({ children }) => {
       };
 
       const response = await api.post('/auth/register', registerData);
-      console.log('Registration response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Registration error:', error);
       const message = error.response?.data?.message || error.response?.data?.error || 'Registration failed. Please try again.';
       throw new Error(message);
     }
   };
 
-  // Forgot Password
   const forgotPassword = async (email) => {
     try {
       const response = await api.post('/auth/forgot-password', { email });
@@ -157,7 +121,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Reset Password
   const resetPassword = async (token, newPassword) => {
     try {
       const response = await api.post('/auth/reset-password', { token, newPassword });
@@ -168,18 +131,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('loginTime');
     localStorage.removeItem('authProvider');
-    // Keep rememberedEmail and rememberMe
     setUser(null);
     setWallets([]);
   };
 
-  // Update user profile
   const updateProfile = async (profileData) => {
     try {
       const response = await api.put('/users/profile', profileData);
@@ -192,16 +152,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Upload profile photo
   const uploadProfilePhoto = async (file) => {
     try {
       const formData = new FormData();
       formData.append('photo', file);
 
       const response = await api.post('/users/profile/photo', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       const updatedUser = { ...user, profilePhoto: response.data.data };

@@ -13,15 +13,24 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
-  const { login } = useAuth();
+
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (user || (token && storedUser)) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Load saved email on mount
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
     const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
-    
+
     if (savedEmail && savedRememberMe) {
       setFormData(prev => ({ ...prev, email: savedEmail }));
       setRememberMe(true);
@@ -41,8 +50,7 @@ const LoginPage = () => {
 
     try {
       await login(formData.email, formData.password);
-      
-      // Save or remove remembered email
+
       if (rememberMe) {
         localStorage.setItem('rememberedEmail', formData.email);
         localStorage.setItem('rememberMe', 'true');
@@ -50,9 +58,9 @@ const LoginPage = () => {
         localStorage.removeItem('rememberedEmail');
         localStorage.removeItem('rememberMe');
       }
-      
+
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       toast.error(error.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -61,7 +69,6 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Save remember me preference before redirect
     if (rememberMe) {
       localStorage.setItem('rememberMe', 'true');
     }
@@ -69,7 +76,6 @@ const LoginPage = () => {
   };
 
   const handleGitHubLogin = () => {
-    // Save remember me preference before redirect
     if (rememberMe) {
       localStorage.setItem('rememberMe', 'true');
     }
@@ -84,7 +90,6 @@ const LoginPage = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 mb-6">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-neon to-neon-dark flex items-center justify-center">
@@ -95,9 +100,7 @@ const LoginPage = () => {
           <p className="text-gray-400">Sign in to your NairaFlow account</p>
         </div>
 
-        {/* Login Form */}
         <div className="glass-card p-8">
-          {/* OAuth Buttons */}
           <div className="space-y-3 mb-6">
             <button
               onClick={handleGoogleLogin}
@@ -123,7 +126,6 @@ const LoginPage = () => {
             </button>
           </div>
 
-          {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-700"></div>
@@ -134,7 +136,6 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 Email Address
@@ -151,7 +152,6 @@ const LoginPage = () => {
               />
             </div>
 
-            {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Password
@@ -172,21 +172,11 @@ const LoginPage = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-neon transition-colors"
                 >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+                  {showPassword ? '🙈' : '👁️'}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center cursor-pointer group">
                 <div className="relative">
@@ -197,8 +187,8 @@ const LoginPage = () => {
                     className="sr-only"
                   />
                   <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center
-                    ${rememberMe 
-                      ? 'bg-neon border-neon' 
+                    ${rememberMe
+                      ? 'bg-neon border-neon'
                       : 'border-gray-600 bg-dark-300 group-hover:border-gray-400'
                     }`}
                   >
@@ -218,7 +208,6 @@ const LoginPage = () => {
               </Link>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -228,7 +217,7 @@ const LoginPage = () => {
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
                   Signing in...
                 </>
@@ -238,7 +227,6 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* Sign Up Link */}
           <p className="mt-8 text-center text-gray-400">
             Don't have an account?{' '}
             <Link to="/register" className="text-neon hover:underline font-medium">
@@ -247,7 +235,6 @@ const LoginPage = () => {
           </p>
         </div>
 
-        {/* Security Note */}
         <p className="mt-6 text-center text-xs text-gray-500">
           🔒 Secured with 256-bit SSL encryption
         </p>
